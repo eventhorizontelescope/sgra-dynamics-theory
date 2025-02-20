@@ -9,5 +9,5 @@ julia setup.jl
 
 # Run IDFE on the whole v3 library
 ```
-bash run_idfe_full_library.sh
+bash run.sh
 ```
