@@ -1,11 +1,15 @@
 '''  Pizza plot code. 
 
 The first function, constraint_plot, is for Sgr A* Paper 5. The other functions are alternate versions.
-It takes pass_table as its primary imput. Pass table is a 4d array. 2 (mad or sane) x 5 (spin) x n (inclination =5 values?) x n (rhigh = 4 values).
-0 corresponds to a pass, 1 and -1 correspond to failing (although there's different options... I believe 1 and -1 are used for mutli=False keyword). 
-When multi=False, 1 Failure corresponds to too high vaue, and -1 corresponds to too low. Multi=True ignores this and does something else. There are a few different failure states. 
+It takes pass_table as its primary imput. Pass table is a 4d array. 2 (mad or sane) x 5 (spin) x 5 (inclination) x 4 (rhigh).
+0 corresponds to a pass, 1 failing too high, -1 to failing too low (at least when multi=False).  Multi=True ignores this and does something else. 
 
-Credit: Michi Baubock and others. I've been told the current pizza plot code is finnicky. Edit with caution.
+Update: I added code to show how to generate a pass_table that passes models within 1 STD of observed range. 
+I'm assuming you have: an array (obsevable) with all values for some feature/observable, and the corresonding model parameters for each subwindow 
+(flux_all_subwindows, spin_all_subwindows, Rh_all_subwindows, i_all_subwindows) in the same order. 
+You may also need to redefine these parameters: obs_val_mean, obs_val_std, std_factor, above and below (to set whether you're viewing models above i<=90 or below i>=90). 
+
+Credit: Michi Baubock, and others (I believe David Lee consulted). Additions by Nick Conroy. I've been told the current pizza plot code is finnicky; edit with caution.
 
 '''
 import numpy as np
@@ -32,6 +36,82 @@ matplotlib.rcParams['font.family'] = 'serif'
 #matplotlib.rcParams['mathtext.default'] = 'stix'
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 #plt.rcParams.update({"text.usetex":True})
+
+###
+### Define pass table like this.
+###
+
+## Define GRMHD parameters
+# flux_values = np.unique(flux_all_subwindows) # in general, can define params like this. To be explicit, I show the v3 Sgr A* params below. 
+# spin_values = np.unique(spin_all_subwindows)
+# rhigh_values = np.unique(Rh_all_subwindows)
+# inc_values_all = np.unique(i_all_subwindows)
+flux_values = np.array([0, 1]) 
+spin_values = np.array([-0.94, -0.5, 0, 0.5, 0.94])
+rhigh_values = np.array([1, 10, 40, 160])
+inc_values_all = np.array([10, 30, 50, 70, 90, 110, 130, 150, 170])
+
+## Define observed values and arrays
+obs_val_mean = 0
+obs_val_std = 1
+upper_bound = true_qu_w_mean + true_qu_w_std
+lower_bound = true_qu_w_mean - true_qu_w_std  
+
+inc_values_above = inc_values_all[inc_values_all <= 90] # bh viewed above
+inc_values_below = inc_values_all[inc_values_all >= 90] # bh viewed below
+pass_table_above = np.zeros((int(len(flux_values)), int(len(spin_values)), int(len(rhigh_values)), int(len(inc_values_above)) ))
+pass_table_below = np.zeros((int(len(flux_values)), int(len(spin_values)), int(len(rhigh_values)), int(len(inc_values_below)) ))
+
+## Set pizza plot parameters
+std_factor = 1 ## this checks if model's mean \pm std_factor*std is within observed range
+above = False     
+below = True      
+
+if above: ## produce pizza plot for inc <= 90
+    inc_values = np.copy(inc_values_above)
+    pass_table = np.copy(pass_table_above)
+    filename_address = '/Users/nick98/Downloads/Constraint_Plot_Above.png'
+elif below: ## produce pizza plot for inc >= 90
+    inc_values = np.copy(inc_values_below)
+    pass_table = np.copy(pass_table_below)
+    filename_address = '/Users/nick98/Downloads/Constraint_Plot_Below.png'
+
+## Produce pass_table
+for madsane_i, flux in np.ndenumerate(flux_values):
+    for spin_i, spin in np.ndenumerate(spin_values):
+        for inclination_i, i in np.ndenumerate(inc_values):
+            for Rh_i, Rh in np.ndenumerate(rhigh_values):
+
+                mask = (madsane == flux_all_subwindows) & (spin == spin_all_subwindows) & (Rh == Rh_all_subwindows) & (i == i_all_subwindows)
+
+                mean = np.mean(observable[mask])
+                std = np.std(observable[mask])
+                
+                ## define pass_table
+                if mean > lower_bound and mean < upper_bound:                                       ## if mean is in range
+                    pass_table[madsane_i, spin_i, Rh_i, inclination_i] = 0 
+                elif mean + std_factor*std > lower_bound and mean + std_factor*std < upper_bound:   ## if mean + std is in range
+                    pass_table[madsane_i, spin_i, Rh_i, inclination_i] = 0
+                elif mean - std_factor*std > lower_bound and mean - std_factor*std < upper_bound:   ## if mean - std is in range
+                    pass_table[madsane_i, spin_i, Rh_i, inclination_i] = 0
+
+                elif mean < lower_bound and mean + std_factor*std > upper_bound:                    ## if mean is below but mean+std is wider than range... then it's still within 1 std of range
+                    pass_table[madsane_i, spin_i, Rh_i, inclination_i] = 0
+                elif mean > upper_bound and mean - std_factor*std < lower_bound:                    ## if mean is above but mean-std is wider than range... then it's still within 1 std of range 
+                    pass_table[madsane_i, spin_i, Rh_i, inclination_i] = 0
+
+                elif mean < lower_bound:                                                            ## if mean is below range beyond std of range
+                    pass_table[madsane_i, spin_i, Rh_i, inclination_i] = -1
+                elif mean > upper_bound:                                                            ## if mean is above range beyond std of range
+                    pass_table[madsane_i, spin_i, Rh_i, inclination_i] = 1  
+
+                print('Flux:', flux, 'Spin:', spin, 'Inclination:', i, 'Rh:', Rh,  '// Pass:', pass_table[madsane_i, spin_i, Rh_i, inclination_i][0])
+
+# pass_table = pass_table[::-1, :, :, :]  # Reverse madsane if needed. Pizza plot wants SANE MAD, but original output for some data is MAD SANE.
+
+###
+### Pizza Plot functions
+###
 
 #def constraint_plot(pass_table, filename = 'Constraint_Plot.png', figtitle = '', show = False, multi = False, color_tab = ['blue', 'green', 'red']):   #v0
 #def constraint_plot(pass_table, filename = 'Constraint_Plot.png', figtitle = '', show = False, multi = False, color_tab = ['blue', 'green', 'red']):   #v1
@@ -156,7 +236,7 @@ def constraint_plot(pass_table, filename = 'Constraint_Plot.png', figtitle = '',
                         areas = areas + ['Missing!']
 
             colors = np.array(colors)
-            colors = colors.reshape((len(inc_values)*len(rhigh_values),4))
+            colors = colors.reshape((len(inc_values)*len(rhigh_values),4), order='F') ## changed
 
             axs[m,c].bar(th, height=rheight, width=thwidth, bottom=r, align='edge', color=colors)
             axs[m,c].grid(visible = True, which = 'major', axis = 'both', zorder = 50, linewidth = 0.7,
@@ -1512,7 +1592,7 @@ def likelihood_plot(like_table, incs = 0, magfield = 0, filename = 'Constraint_P
 
             colors = np.array(colors)
 #             print(str(colors.shape))
-#             colors = colors.reshape((len(plot_incs)*len(all_rhighs),4))
+#             colors = colors.reshape((len(plot_incs)*len(all_rhighs),4), order='F') ## changed to add Order='F
             colors = colors.reshape((len(plot_rlows)*len(all_rhighs),4))
 #             print(str(colors.shape))
             hatches = np.array(hatches)
