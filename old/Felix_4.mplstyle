@@ -1,0 +1,105 @@
+
+################################################################################
+# backend settings                                                             #
+################################################################################
+#backend              : pgf
+#backend_fallback     : True
+
+################################################################################
+# lines                                                                        #
+################################################################################
+lines.antialiased    : True  
+lines.linewidth      : 1.5  
+lines.color          : k
+lines.markersize     : 3.0
+lines.markeredgewidth: 0.5
+lines.marker         : 
+lines.linestyle      : -
+
+################################################################################
+# errorbar                                                                        #
+################################################################################
+errorbar.capsize:  2
+#errorbar.capthick: 5
+
+
+################################################################################
+# image                                                                      #
+################################################################################
+image.cmap                  : viridis
+image.origin                : lower
+contour.negative_linestyle  : solid
+image.interpolation         : nearest
+
+
+################################################################################
+# text rendering                                                               #
+################################################################################
+font.size            : 10.0
+# font.sans-serif      : Helvetica
+font.sans-serif      : Verdana
+font.serif           : Times New Roman
+# font.family          : serif
+font.family          : sans-serif
+text.color           : black
+
+################################################################################
+# axes                                                                         #
+################################################################################
+axes.facecolor       : white
+axes.edgecolor       : 0.0
+axes.linewidth       : 0.6
+axes.titlesize       : small
+axes.labelsize       : small
+#axes.prop_cycle      : cycler('color', ['C02F1D','000000','348abd','F26D21','7A68A6'])
+
+################################################################################
+# ticks                                                                        #
+################################################################################
+xtick.top           : False
+xtick.bottom        : True
+xtick.labelsize     : small
+xtick.major.width   : 0.6
+xtick.major.size    : 2
+xtick.minor.size    : 1.5
+xtick.direction     : in
+
+ytick.left          : True   
+ytick.right         : False
+ytick.major.width   : 0.6
+ytick.major.size    : 2
+ytick.minor.size    : 1.5
+ytick.direction     : in
+ytick.labelsize     : small
+
+################################################################################
+# grids                                                                        #
+################################################################################
+grid.color          : .8 
+grid.linestyle      : -   
+grid.linewidth      : 0.3   
+axes.grid           : False
+
+################################################################################
+# legend                                                                       #
+################################################################################
+legend.loc           : best
+legend.fontsize      : 10
+legend.frameon       : False
+legend.fancybox      : False
+legend.shadow        : False
+legend.markerscale   : 1.
+legend.handlelength  : 1.2
+legend.numpoints     : 1
+
+################################################################################
+# figure                                                                       #
+################################################################################
+#figure.figsize      : 7, 4.5
+figure.figsize      : 7.245, 4.4778
+figure.titlesize    : medium
+figure.dpi          : 200
+savefig.dpi         : 200
+savefig.bbox        : tight
+figure.facecolor    : white
+figure.edgecolor    : white
